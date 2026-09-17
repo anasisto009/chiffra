@@ -1,0 +1,7 @@
+Stack: Node.js 20 + TypeScript + Fastify + LangGraph + PostgreSQL + Redis
+Calculs: decimal.js uniquement, jamais le LLM
+GPT-5.5: orchestration agent uniquement
+GPT-4.1: extraction, classification, JSON
+Montants: toujours en MAD, stockés en numeric PostgreSQL
+psql dans mon pc mot de passe 123456
+

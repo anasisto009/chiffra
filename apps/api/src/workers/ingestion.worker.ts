@@ -18,7 +18,7 @@ async function markDocumentNonTraite(documentId: string, reason: string): Promis
   await pool.query(
     `UPDATE documents
      SET status = 'non_traite',
-         ocr_cache = jsonb_build_object('reason', $2)
+         ocr_cache = jsonb_build_object('reason', $2::text)
      WHERE id = $1`,
     [documentId, reason]
   );

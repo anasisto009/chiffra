@@ -23,7 +23,7 @@ export type MockAnomaly = {
   vendor: string;
   type: AnomalyFamily;
   exposureMad: number;
-  confidence: number;
+  confidence: number | null;
   invoiceNumber: string;
   description: string;
   source: string;

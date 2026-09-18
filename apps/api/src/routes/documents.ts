@@ -4,7 +4,7 @@ import { pool } from "../db/client.js";
 export async function registerDocumentRoutes(app: FastifyInstance): Promise<void> {
   app.get("/api/documents", async () => {
     const result = await pool.query(
-      `SELECT id, filename, type, status, created_at
+      `SELECT id, filename, type, status, ocr_cache->>'reason' AS reason, created_at
        FROM documents
        ORDER BY created_at DESC`
     );

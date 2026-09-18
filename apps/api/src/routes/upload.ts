@@ -81,7 +81,9 @@ export async function registerUploadRoutes(app: FastifyInstance): Promise<void> 
     reply.raw.writeHead(200, {
       "Content-Type": "text/event-stream",
       "Cache-Control": "no-cache, no-transform",
-      Connection: "keep-alive"
+      Connection: "keep-alive",
+      "Access-Control-Allow-Origin": "*",
+      Vary: "Origin"
     });
 
     const onProgress = (event: unknown) => {

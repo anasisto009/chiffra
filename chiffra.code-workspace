@@ -1,0 +1,14 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "../../Documents/numeos/sujet-03-chiffra"
+		}
+	],
+	"settings": {
+		"chat.byokUtilityModelDefault": "none",
+		"postman.settings.dotenv-detection-notification-visibility": false
+	}
+}

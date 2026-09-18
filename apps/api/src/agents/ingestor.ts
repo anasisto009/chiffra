@@ -3,7 +3,7 @@ import { toDecimal } from "@chiffra/shared";
 import { createHash } from "node:crypto";
 import Redis from "ioredis";
 import pdfParse from "pdf-parse";
-import { recognize } from "tesseract.js";
+import { createWorker } from "tesseract.js";
 import * as XLSX from "xlsx";
 import { z } from "zod";
 import { config, env } from "../config.js";
@@ -246,7 +246,19 @@ export async function ingestImage(buffer: Buffer, filename: string): Promise<Ing
     return cached;
   }
 
-  const ocr = await recognize(buffer, "fra+eng").catch(() => null);
+  const ocr = await (async () => {
+    const worker = await createWorker("fra+eng").catch(() => null);
+
+    if (!worker) {
+      return null;
+    }
+
+    try {
+      return await worker.recognize(buffer);
+    } finally {
+      await worker.terminate();
+    }
+  })().catch(() => null);
   const confidence = (ocr?.data.confidence ?? 0) / 100;
   const rawText = ocr?.data.text.trim() ?? "";
 

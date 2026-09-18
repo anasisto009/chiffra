@@ -61,10 +61,12 @@ export const ingestionWorker = new Worker<IngestionJobData>(
       }
 
       const invoice = result.invoice;
+      await ensureDocumentEmbedding(documentId, result.rawText);
 
-      await pool.query("BEGIN");
+      const client = await pool.connect();
       try {
-        await pool.query(
+        await client.query("BEGIN");
+        await client.query(
           `UPDATE documents
            SET status = 'done',
                raw_text = $2,
@@ -73,7 +75,7 @@ export const ingestionWorker = new Worker<IngestionJobData>(
           [documentId, result.rawText, JSON.stringify(result)]
         );
 
-        await pool.query(
+        await client.query(
           `INSERT INTO invoices (
             document_id, vendor, date, amount_ht, tva, tva_rate, amount_ttc, invoice_number, period
           )
@@ -91,12 +93,12 @@ export const ingestionWorker = new Worker<IngestionJobData>(
           ]
         );
 
-        await ensureDocumentEmbedding(documentId, result.rawText);
-
-        await pool.query("COMMIT");
+        await client.query("COMMIT");
       } catch (error) {
-        await pool.query("ROLLBACK");
+        await client.query("ROLLBACK");
         throw error;
+      } finally {
+        client.release();
       }
 
       publishIngestionProgress({

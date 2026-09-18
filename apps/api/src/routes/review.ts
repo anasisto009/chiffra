@@ -5,6 +5,14 @@ import { pool } from "../db/client.js";
 const reviewBodySchema = z.object({
   decision: z.enum(["validated", "rejected"]),
   note: z.string().optional().default("")
+}).superRefine((body, context) => {
+  if (body.decision === "rejected" && body.note.trim().length === 0) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["note"],
+      message: "A rejection reason is required."
+    });
+  }
 });
 
 export async function registerReviewRoutes(app: FastifyInstance): Promise<void> {

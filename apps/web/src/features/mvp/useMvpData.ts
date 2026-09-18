@@ -13,6 +13,7 @@ export type ApiDocument = {
 export type ApiAnomaly = {
   id: string;
   invoice_id: string;
+  document_id?: string;
   type: string;
   description: string;
   exposure_mad: string;

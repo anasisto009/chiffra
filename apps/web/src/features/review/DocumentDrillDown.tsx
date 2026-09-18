@@ -5,6 +5,7 @@ import { Button } from "../../components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "../../components/ui/dialog";
 import type { MockAnomaly } from "../mvp/mockData";
 import { formatMad } from "../../lib/formatters";
+import { API_URL } from "../../api";
 
 type DocumentDrillDownProps = {
   anomaly: MockAnomaly | null;
@@ -34,9 +35,9 @@ export function DocumentDrillDown({ anomaly, onClose, onDecision }: DocumentDril
         {anomaly ? <>
           <div className="min-h-[28rem] bg-slate-900 p-6 text-white">
             <div className="flex items-center justify-between"><p className="text-sm font-semibold uppercase tracking-wide text-slate-300">Document source</p><Badge variant="secondary">{anomaly.sourceKind.toUpperCase()}</Badge></div>
-            <div className="mt-6 flex min-h-[21rem] items-center justify-center rounded-md border border-slate-700 bg-slate-800">
-              {anomaly.sourceKind === "image" ? <Image className="h-16 w-16 text-slate-500" aria-hidden="true" /> : <FileText className="h-16 w-16 text-slate-500" aria-hidden="true" />}
-              <span className="sr-only">Aperçu simulé du document {anomaly.source}</span>
+            <div className="mt-6 flex min-h-[21rem] items-center justify-center overflow-hidden rounded-md border border-slate-700 bg-slate-800">
+              {anomaly.documentId ? <iframe className="h-[21rem] w-full bg-white" src={`${API_URL}/api/documents/${anomaly.documentId}/source`} title={`Source ${anomaly.source}`} /> : anomaly.sourceKind === "image" ? <Image className="h-16 w-16 text-slate-500" aria-hidden="true" /> : <FileText className="h-16 w-16 text-slate-500" aria-hidden="true" />}
+              {!anomaly.documentId ? <span className="sr-only">Aperçu indisponible du document {anomaly.source}</span> : null}
             </div>
             <p className="mt-4 truncate text-sm text-slate-300">{anomaly.source}</p>
           </div>

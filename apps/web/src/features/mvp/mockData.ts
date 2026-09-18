@@ -19,6 +19,7 @@ export type AnomalyFamily =
 
 export type MockAnomaly = {
   id: string;
+  documentId?: string;
   date: string;
   vendor: string;
   type: AnomalyFamily;

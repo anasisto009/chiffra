@@ -1,4 +1,6 @@
 import type { FastifyInstance } from "fastify";
+import { createReadStream } from "node:fs";
+import { basename } from "node:path";
 import { pool } from "../db/client.js";
 
 export async function registerDocumentRoutes(app: FastifyInstance): Promise<void> {
@@ -12,6 +14,23 @@ export async function registerDocumentRoutes(app: FastifyInstance): Promise<void
     return {
       documents: result.rows
     };
+  });
+
+  app.get<{ Params: { id: string } }>("/api/documents/:id/source", async (request, reply) => {
+    const result = await pool.query<{ storage_path: string | null; type: string; filename: string }>(
+      "SELECT storage_path, type, filename FROM documents WHERE id = $1",
+      [request.params.id]
+    );
+    const document = result.rows[0];
+
+    if (!document?.storage_path) {
+      return reply.code(404).send({ error: "document_source_not_found" });
+    }
+
+    return reply
+      .header("Content-Type", document.type)
+      .header("Content-Disposition", `inline; filename="${basename(document.filename)}"`)
+      .send(createReadStream(document.storage_path));
   });
 
   app.get<{ Params: { id: string } }>("/api/documents/:id", async (request, reply) => {

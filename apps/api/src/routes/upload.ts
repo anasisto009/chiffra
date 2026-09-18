@@ -1,5 +1,8 @@
 import type { FastifyInstance } from "fastify";
 import multipart from "@fastify/multipart";
+import { mkdir, writeFile } from "node:fs/promises";
+import { join } from "node:path";
+import { randomUUID } from "node:crypto";
 import { pool } from "../db/client.js";
 import {
   ingestionEvents,
@@ -9,6 +12,9 @@ import {
 import { errorReason } from "../utils/errors.js";
 
 export async function registerUploadRoutes(app: FastifyInstance): Promise<void> {
+  const uploadDirectory = join(process.cwd(), "uploads");
+  await mkdir(uploadDirectory, { recursive: true });
+
   await app.register(multipart, {
     limits: {
       files: 200,
@@ -24,11 +30,14 @@ export async function registerUploadRoutes(app: FastifyInstance): Promise<void> 
 
       try {
         const buffer = await part.toBuffer();
+        const storedFilename = `${randomUUID()}-${part.filename.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
+        const storagePath = join(uploadDirectory, storedFilename);
+        await writeFile(storagePath, buffer);
         const documentResult = await pool.query<{ id: string }>(
-          `INSERT INTO documents (filename, type, status)
-           VALUES ($1, $2, 'pending')
+          `INSERT INTO documents (filename, type, storage_path, status)
+           VALUES ($1, $2, $3, 'pending')
            RETURNING id`,
-          [part.filename, part.mimetype ?? "application/octet-stream"]
+          [part.filename, part.mimetype ?? "application/octet-stream", storagePath]
         );
         documentId = documentResult.rows[0].id;
         const job = await ingestionQueue.add("ingest-document", {
@@ -61,6 +70,10 @@ export async function registerUploadRoutes(app: FastifyInstance): Promise<void> 
              WHERE id = $1`,
             [documentId, reason]
           );
+        }
+
+        if (documentId) {
+          await pool.query("UPDATE documents SET storage_path = NULL WHERE id = $1", [documentId]);
         }
 
         return reply.code(400).send({

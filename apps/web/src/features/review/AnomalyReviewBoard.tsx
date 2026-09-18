@@ -25,6 +25,7 @@ export function AnomalyReviewBoard() {
   const rows = useMemo(() => {
     const mapped = sourceAnomalies.map((anomaly) => ({
       id: anomaly.id,
+      documentId: anomaly.document_id,
       date: anomaly.date ?? "-",
       vendor: anomaly.vendor ?? "Tiers inconnu",
       type: anomaly.type as MockAnomaly["type"],

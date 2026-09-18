@@ -20,11 +20,14 @@ CREATE TABLE IF NOT EXISTS documents (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   filename text NOT NULL,
   type text NOT NULL,
+  storage_path text,
   status document_status NOT NULL DEFAULT 'pending',
   raw_text text,
   ocr_cache jsonb,
   created_at timestamptz NOT NULL DEFAULT now()
 );
+
+ALTER TABLE documents ADD COLUMN IF NOT EXISTS storage_path text;
 
 CREATE TABLE IF NOT EXISTS invoices (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),

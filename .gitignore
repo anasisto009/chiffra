@@ -14,3 +14,4 @@ Dockerfile.local
 uploads/
 **/uploads/
 .DS_Store
+scratch/

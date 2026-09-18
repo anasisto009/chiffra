@@ -1,5 +1,6 @@
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 CREATE EXTENSION IF NOT EXISTS vector;
+CREATE EXTENSION IF NOT EXISTS unaccent;
 
 DO $$
 BEGIN
@@ -15,6 +16,18 @@ BEGIN
     CREATE TYPE anomaly_status AS ENUM ('pending', 'validated', 'rejected');
   END IF;
 END $$;
+
+CREATE TABLE IF NOT EXISTS fournisseurs (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  nom text UNIQUE NOT NULL,
+  ice text,
+  categorie text NOT NULL DEFAULT 'general',
+  taux_tva_habituel numeric(5, 2) NOT NULL DEFAULT 20.0,
+  compte_comptable text,
+  recurrent boolean DEFAULT false,
+  montant_moyen_ttc_mad numeric(18, 2) DEFAULT 0,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
 
 CREATE TABLE IF NOT EXISTS documents (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -95,6 +108,8 @@ CREATE INDEX IF NOT EXISTS idx_invoices_vendor_date ON invoices(vendor, date);
 CREATE INDEX IF NOT EXISTS idx_bank_lines_document_id ON bank_lines(document_id);
 CREATE INDEX IF NOT EXISTS idx_bank_lines_matched_invoice_id ON bank_lines(matched_invoice_id);
 CREATE INDEX IF NOT EXISTS idx_anomalies_invoice_id ON anomalies(invoice_id);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_anomalies_unique_invoice_type ON anomalies(invoice_id, type);
 CREATE INDEX IF NOT EXISTS idx_anomalies_exposure_mad ON anomalies(exposure_mad DESC);
+CREATE INDEX IF NOT EXISTS idx_fournisseurs_nom ON fournisseurs(nom);
 CREATE INDEX IF NOT EXISTS idx_orchestration_checkpoints_run_id ON orchestration_checkpoints(run_id, created_at);
 CREATE INDEX IF NOT EXISTS idx_document_embeddings_vector ON document_embeddings USING ivfflat (embedding vector_cosine_ops);

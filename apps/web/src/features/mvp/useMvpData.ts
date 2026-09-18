@@ -1,5 +1,5 @@
-import { useQuery } from "@tanstack/react-query";
-import { apiGet } from "../../api";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { apiGet, apiPost } from "../../api";
 
 export type ApiDocument = {
   id: string;
@@ -7,7 +7,9 @@ export type ApiDocument = {
   type: string;
   status: "pending" | "processing" | "done" | "non_traite";
   reason?: string | null;
+  message?: string | null;
   created_at: string;
+  progress?: number;
 };
 
 export type ApiAnomaly = {
@@ -23,6 +25,7 @@ export type ApiAnomaly = {
   date?: string;
   invoice_number?: string;
   filename?: string;
+  details?: any;
 };
 
 export type ApiStats = {
@@ -61,5 +64,30 @@ export function useMockAnomalies() {
     queryKey: ["anomalies"],
     queryFn: async () => (await apiGet<{ anomalies: ApiAnomaly[] }>("/api/anomalies")).anomalies,
     refetchInterval: 3000
+  });
+}
+
+export function useReviewAnomaly() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      anomalyId,
+      decision,
+      note
+    }: {
+      anomalyId: string;
+      decision: "validated" | "rejected";
+      note?: string;
+    }) => {
+      return apiPost<{ anomaly: ApiAnomaly }>(`/api/anomalies/${anomalyId}/review`, {
+        decision,
+        note: note || (decision === "validated" ? "Validé par le comptable" : "Rejeté lors de la revue")
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["anomalies"] });
+      queryClient.invalidateQueries({ queryKey: ["stats"] });
+    }
   });
 }

@@ -1,5 +1,1 @@
-import { UploadTracking } from "../features/upload/UploadTracking";
-
-export function Upload() {
-  return <UploadTracking />;
-}
+export { UploadPage as Upload } from "./UploadPage";

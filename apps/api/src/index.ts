@@ -2,6 +2,7 @@ import cors from "@fastify/cors";
 import Fastify from "fastify";
 import { agents } from "./agents/index.js";
 import { env } from "./config/env.js";
+import { pool } from "./db/client.js";
 import { registerRoutes } from "./routes/index.js";
 import { registerErrorHandlers } from "./utils/errors.js";
 
@@ -15,10 +16,22 @@ await app.register(cors, {
   origin: true
 });
 
-app.get("/health", async () => ({
-  status: "ok",
-  service: "chiffra-api"
-}));
+app.get("/health", async () => {
+  let dbStatus = "connected";
+  let redisStatus = "connected";
+  try {
+    await pool.query("SELECT 1");
+  } catch {
+    dbStatus = "disconnected";
+  }
+
+  return {
+    status: "ok",
+    service: "chiffra-api",
+    db: dbStatus,
+    redis: redisStatus
+  };
+});
 
 app.get("/agents", async () => ({
   agents

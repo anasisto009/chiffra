@@ -69,6 +69,14 @@ CREATE TABLE IF NOT EXISTS human_reviews (
   CONSTRAINT human_reviews_decision_check CHECK (decision IN ('validated', 'rejected'))
 );
 
+CREATE TABLE IF NOT EXISTS orchestration_checkpoints (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  run_id text NOT NULL,
+  node text NOT NULL,
+  state jsonb NOT NULL,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
 CREATE INDEX IF NOT EXISTS idx_documents_status ON documents(status);
 CREATE INDEX IF NOT EXISTS idx_invoices_document_id ON invoices(document_id);
 CREATE INDEX IF NOT EXISTS idx_invoices_vendor_date ON invoices(vendor, date);
@@ -76,4 +84,4 @@ CREATE INDEX IF NOT EXISTS idx_bank_lines_document_id ON bank_lines(document_id)
 CREATE INDEX IF NOT EXISTS idx_bank_lines_matched_invoice_id ON bank_lines(matched_invoice_id);
 CREATE INDEX IF NOT EXISTS idx_anomalies_invoice_id ON anomalies(invoice_id);
 CREATE INDEX IF NOT EXISTS idx_anomalies_exposure_mad ON anomalies(exposure_mad DESC);
-
+CREATE INDEX IF NOT EXISTS idx_orchestration_checkpoints_run_id ON orchestration_checkpoints(run_id, created_at);

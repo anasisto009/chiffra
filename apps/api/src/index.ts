@@ -2,7 +2,7 @@ import cors from "@fastify/cors";
 import Fastify from "fastify";
 import { agents } from "./agents/index.js";
 import { env } from "./config/env.js";
-import { registerUploadRoutes } from "./routes/upload.js";
+import { registerRoutes } from "./routes/index.js";
 import "./workers/ingestion.worker.js";
 
 const app = Fastify({
@@ -28,7 +28,7 @@ app.get("/rules", async () => ({
   databaseAmountType: "numeric"
 }));
 
-await registerUploadRoutes(app);
+await registerRoutes(app);
 
 await app.listen({
   host: env.host,

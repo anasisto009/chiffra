@@ -1,5 +1,6 @@
 node_modules/
 dist/
+*.tsbuildinfo
 .vite/
 coverage/
 .env
@@ -11,4 +12,3 @@ yarn-error.log*
 pnpm-debug.log*
 Dockerfile.local
 .DS_Store
-

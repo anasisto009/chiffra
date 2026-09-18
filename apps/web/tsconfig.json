@@ -10,11 +10,5 @@
   "include": [
     "src",
     "vite.config.ts"
-  ],
-  "references": [
-    {
-      "path": "../../packages/shared"
-    }
   ]
 }
-

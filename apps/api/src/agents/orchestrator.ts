@@ -82,6 +82,7 @@ function invoiceFromIngestion(
 
 async function ingestorNode(state: OrchestratorState): Promise<Partial<OrchestratorState>> {
   const invoices = [...state.invoices];
+  const bankLines = [...state.bankLines];
   const errors = [...state.errors];
 
   for (const document of state.documents) {
@@ -93,12 +94,24 @@ async function ingestorNode(state: OrchestratorState): Promise<Partial<Orchestra
       );
 
       if (result.status === "done") {
-        invoices.push(invoiceFromIngestion(document, result));
+        const extracted = result.invoices && result.invoices.length > 0 ? result.invoices : [result.invoice];
+        for (const inv of extracted) {
+          invoices.push(invoiceFromIngestion(document, { ...result, invoice: inv }));
+        }
+      } else if (result.status === "bank_lines") {
+        for (const line of result.lines) {
+          bankLines.push({
+            id: randomUUID(),
+            date: line.date,
+            description: line.description,
+            amount: line.amount
+          });
+        }
       } else {
         errors.push({
           document_id: document.id,
           node: "ingestor",
-          message: result.reason
+          message: result.message || result.reason
         });
       }
     } catch (error) {
@@ -113,6 +126,7 @@ async function ingestorNode(state: OrchestratorState): Promise<Partial<Orchestra
   const nextState: OrchestratorState = {
     ...state,
     invoices,
+    bankLines,
     errors,
     status: "ingesting"
   };

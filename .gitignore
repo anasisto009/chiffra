@@ -11,4 +11,6 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 Dockerfile.local
+uploads/
+**/uploads/
 .DS_Store

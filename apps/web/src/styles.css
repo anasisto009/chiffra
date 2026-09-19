@@ -161,6 +161,23 @@ h1 {
   background: #18563a;
 }
 
+.secondary-button {
+  min-height: 40px;
+  padding: 0 14px;
+  color: #17201b;
+  background: #ffffff;
+  border: 1px solid #cfd8d1;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 900;
+}
+
+.actions-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 16px;
+}
+
 .sr-only {
   position: absolute;
   width: 1px;

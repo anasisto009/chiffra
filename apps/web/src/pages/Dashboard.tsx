@@ -3,6 +3,7 @@ import { apiGet } from "../api";
 import { AskBox } from "../components/AskBox";
 import { ReviewPanel } from "../components/ReviewPanel";
 import { StatsBar } from "../components/StatsBar";
+import { TvaExportButton } from "../components/TvaExportButton";
 
 type Severity = "low" | "medium" | "high";
 type AnomalyStatus = "pending" | "validated" | "rejected";
@@ -91,6 +92,10 @@ export function Dashboard() {
           <span>Total exposure</span>
           <strong>{formatMad(totalExposure.toFixed(2))}</strong>
         </div>
+      </div>
+
+      <div className="actions-row">
+        <TvaExportButton />
       </div>
 
       {error ? <p className="notice notice--danger">{error}</p> : null}

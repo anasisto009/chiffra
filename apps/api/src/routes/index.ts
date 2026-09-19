@@ -2,6 +2,7 @@ import type { FastifyInstance } from "fastify";
 import { registerAnomalyRoutes } from "./anomalies.js";
 import { registerAskRoutes } from "./ask.js";
 import { registerDocumentRoutes } from "./documents.js";
+import { registerExportRoutes } from "./export.js";
 import { registerReviewRoutes } from "./review.js";
 import { registerStatsRoutes } from "./stats.js";
 import { registerUploadRoutes } from "./upload.js";
@@ -13,4 +14,5 @@ export async function registerRoutes(app: FastifyInstance): Promise<void> {
   await registerReviewRoutes(app);
   await registerStatsRoutes(app);
   await registerAskRoutes(app);
+  await registerExportRoutes(app);
 }

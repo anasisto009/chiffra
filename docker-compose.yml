@@ -34,6 +34,7 @@ services:
       context: .
       dockerfile: apps/api/Dockerfile
     container_name: chiffra-api
+    command: ["sh", "-c", "npm run migrate -w @chiffra/api && npm run dev -w @chiffra/api"]
     environment:
       API_HOST: 0.0.0.0
       API_PORT: 4000
@@ -60,6 +61,36 @@ services:
       redis:
         condition: service_healthy
 
+  worker:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: chiffra-worker
+    command: ["npm", "run", "worker", "-w", "@chiffra/api"]
+    environment:
+      API_HOST: 0.0.0.0
+      API_PORT: 4000
+      DATABASE_URL: ${DATABASE_URL:-postgres://chiffra:chiffra@postgres:5432/chiffra}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+      LLM_URL: ${LLM_URL:-https://api.openai.com/v1}
+      LLM_API_KEY: ${LLM_API_KEY:-replace-me}
+      LLM_MODEL: ${LLM_MODEL:-gpt-5.5}
+      AZURE_OPENAI_API_KEY: ${AZURE_OPENAI_API_KEY:-replace-me}
+      AZURE_OPENAI_ENDPOINT: ${AZURE_OPENAI_ENDPOINT:-https://example.cognitiveservices.azure.com/}
+      AZURE_OPENAI_API_VERSION: ${AZURE_OPENAI_API_VERSION:-2024-12-01-preview}
+      AZURE_OPENAI_DEPLOYMENT_NAME: ${AZURE_OPENAI_DEPLOYMENT_NAME:-gpt-4.1}
+      AZURE_OPENAI_MAX_TOKENS: ${AZURE_OPENAI_MAX_TOKENS:-16384}
+      EMBEDDING_MODEL: ${EMBEDDING_MODEL:-embedder-small-3}
+      EMBEDDING_DIMENSIONS: ${EMBEDDING_DIMENSIONS:-512}
+    volumes:
+      - .:/app
+      - worker_node_modules:/app/node_modules
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
   web:
     build:
       context: .
@@ -68,7 +99,7 @@ services:
     environment:
       VITE_API_URL: http://localhost:4000
     ports:
-      - "5173:5173"
+      - "3000:3000"
     volumes:
       - .:/app
       - web_node_modules:/app/node_modules
@@ -79,4 +110,5 @@ volumes:
   postgres_data:
   redis_data:
   api_node_modules:
+  worker_node_modules:
   web_node_modules:

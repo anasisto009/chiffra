@@ -50,7 +50,8 @@ export type IngestorFailure = {
     | "excel_unreadable"
     | "unsupported_file_type"
     | "amount_validation_failed"
-    | "llm_json_invalid";
+    | "llm_json_invalid"
+    | "ingestion_error";
   rawText?: string;
 };
 
@@ -345,21 +346,29 @@ export async function ingestDocument(
   filename: string,
   mimeType?: string
 ): Promise<IngestorResult> {
-  if (isPdf(filename, mimeType)) {
-    return ingestCleanPdf(buffer, filename);
-  }
+  try {
+    if (isPdf(filename, mimeType)) {
+      return ingestCleanPdf(buffer, filename);
+    }
 
-  if (isImage(filename, mimeType)) {
-    return ingestImage(buffer, filename);
-  }
+    if (isImage(filename, mimeType)) {
+      return ingestImage(buffer, filename);
+    }
 
-  if (isExcel(filename, mimeType)) {
-    return ingestExcel(buffer, filename);
-  }
+    if (isExcel(filename, mimeType)) {
+      return ingestExcel(buffer, filename);
+    }
 
-  return {
-    status: "non_traite",
-    hash: documentHash(buffer),
-    reason: "unsupported_file_type"
-  };
+    return {
+      status: "non_traite",
+      hash: documentHash(buffer),
+      reason: "unsupported_file_type"
+    };
+  } catch {
+    return {
+      status: "non_traite",
+      hash: documentHash(buffer),
+      reason: "ingestion_error"
+    };
+  }
 }

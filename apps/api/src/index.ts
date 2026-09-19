@@ -3,11 +3,14 @@ import Fastify from "fastify";
 import { agents } from "./agents/index.js";
 import { env } from "./config/env.js";
 import { registerRoutes } from "./routes/index.js";
+import { registerErrorHandlers } from "./utils/errors.js";
 import "./workers/ingestion.worker.js";
 
 const app = Fastify({
   logger: true
 });
+
+registerErrorHandlers(app);
 
 await app.register(cors, {
   origin: true

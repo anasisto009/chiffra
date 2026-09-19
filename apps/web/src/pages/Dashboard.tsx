@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { apiGet } from "../api";
 import { ReviewPanel } from "../components/ReviewPanel";
+import { StatsBar } from "../components/StatsBar";
 
 type Severity = "low" | "medium" | "high";
 type AnomalyStatus = "pending" | "validated" | "rejected";
@@ -92,6 +93,8 @@ export function Dashboard() {
       </div>
 
       {error ? <p className="notice notice--danger">{error}</p> : null}
+
+      <StatsBar />
 
       <div className="filters">
         <label>

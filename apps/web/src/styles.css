@@ -185,6 +185,38 @@ h1 {
   background: #ffe8e5;
 }
 
+.stats-bar {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.stats-bar div {
+  min-height: 82px;
+  padding: 14px;
+  background: #ffffff;
+  border: 1px solid #d9ded6;
+  border-radius: 8px;
+}
+
+.stats-bar span,
+.stats-bar strong {
+  display: block;
+}
+
+.stats-bar span {
+  color: #65746c;
+  font-size: 0.74rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.stats-bar strong {
+  margin-top: 10px;
+  font-size: 1rem;
+}
+
 .progress {
   margin-top: 18px;
   padding: 16px;
@@ -555,6 +587,10 @@ tbody tr:hover {
   }
 
   .result-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .stats-bar {
     grid-template-columns: 1fr;
   }
 

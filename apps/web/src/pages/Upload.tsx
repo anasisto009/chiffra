@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { API_URL, apiGet } from "../api";
 import { ProgressBar } from "../components/ProgressBar";
+import { StatsBar } from "../components/StatsBar";
 
 type FileStatus = "queued" | "processing" | "done" | "non_traite";
 
@@ -186,6 +187,8 @@ export function Upload() {
         </div>
       </div>
 
+      <StatsBar />
+
       <div
         className={`dropzone${isDragging ? " dropzone--active" : ""}`}
         onDragEnter={(event) => {
@@ -256,4 +259,3 @@ export function Upload() {
     </section>
   );
 }
-

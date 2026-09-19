@@ -10,7 +10,7 @@ const reviewBodySchema = z.object({
 export async function registerAnomalyRoutes(app: FastifyInstance): Promise<void> {
   app.get("/api/anomalies", async () => {
     const result = await pool.query(
-      `SELECT anomalies.*, invoices.vendor, invoices.invoice_number, documents.filename
+      `SELECT anomalies.*, invoices.vendor, invoices.date, invoices.invoice_number, documents.filename
        FROM anomalies
        LEFT JOIN invoices ON invoices.id = anomalies.invoice_id
        LEFT JOIN documents ON documents.id = invoices.document_id
@@ -83,4 +83,3 @@ export async function registerAnomalyRoutes(app: FastifyInstance): Promise<void>
     }
   );
 }
-

@@ -56,6 +56,7 @@ export type AuditOptions = {
   fiscalPeriod: string;
   vendorReferential: VendorReference[];
   historicalInvoices?: AuditInvoice[];
+  rejectedTypeCounts?: Record<string, number>;
 };
 
 const expectedRateByCategory: Record<VendorCategory, string> = {
@@ -89,6 +90,35 @@ function severityForExposure(exposureMad: string): AuditAnomaly["severity"] {
   }
 
   return "low";
+}
+
+function lowerSeverity(severity: AuditAnomaly["severity"]): AuditAnomaly["severity"] {
+  if (severity === "high") {
+    return "medium";
+  }
+
+  if (severity === "medium") {
+    return "low";
+  }
+
+  return "low";
+}
+
+function applyFeedbackPriority(
+  anomaly: AuditAnomaly,
+  rejectedTypeCounts: Record<string, number> = {}
+): AuditAnomaly {
+  const rejectedCount = rejectedTypeCounts[anomaly.type] ?? 0;
+
+  if (rejectedCount < 2) {
+    return anomaly;
+  }
+
+  return {
+    ...anomaly,
+    severity: lowerSeverity(anomaly.severity),
+    description: `${anomaly.description} Priorite reduite: ce type a deja ete rejete ${rejectedCount} fois.`
+  };
 }
 
 function vendorLookup(vendors: VendorReference[]): Map<string, VendorReference> {
@@ -134,35 +164,35 @@ export function auditInvoices(invoices: AuditInvoice[], options: AuditOptions): 
     const vendorReference = vendors.get(normalizeVendor(invoice.vendor));
 
     if (!ALLOWED_TVA_RATES.some((allowedRate) => rate.equals(allowedRate))) {
-      anomalies.push({
+      anomalies.push(applyFeedbackPriority({
         invoice_id: invoice.id,
         type: "tva_rate_invalid",
         description: `Taux TVA ${invoice.tva_rate}% non autorise.`,
         exposure_mad: money(invoice.tva),
         severity: severityForExposure(invoice.tva)
-      });
+      }, options.rejectedTypeCounts));
     }
 
     const tvaDelta = expected.minus(actualTva).abs();
 
     if (tvaDelta.greaterThan(TVA_TOLERANCE_MAD)) {
-      anomalies.push({
+      anomalies.push(applyFeedbackPriority({
         invoice_id: invoice.id,
         type: "tva_calculation_error",
         description: `TVA attendue ${expected.toFixed(2)} MAD, TVA facturee ${actualTva.toFixed(2)} MAD.`,
         exposure_mad: tvaDelta.toFixed(2),
         severity: severityForExposure(tvaDelta.toFixed(2))
-      });
+      }, options.rejectedTypeCounts));
     }
 
     if (!vendorReference) {
-      anomalies.push({
+      anomalies.push(applyFeedbackPriority({
         invoice_id: invoice.id,
         type: "unknown_vendor",
         description: `Fournisseur inconnu du referentiel: ${invoice.vendor}.`,
         exposure_mad: money(invoice.amount_ttc),
         severity: severityForExposure(invoice.amount_ttc)
-      });
+      }, options.rejectedTypeCounts));
     } else {
       const expectedRate = expectedRateByCategory[vendorReference.category];
 
@@ -171,37 +201,37 @@ export function auditInvoices(invoices: AuditInvoice[], options: AuditOptions): 
           .mul(rate.minus(expectedRate).abs())
           .div(100)
           .toFixed(2);
-        anomalies.push({
+        anomalies.push(applyFeedbackPriority({
           invoice_id: invoice.id,
           type: "tva_rate_mismatch",
           description: `Taux TVA ${invoice.tva_rate}% incoherent avec la categorie ${vendorReference.category}; attendu ${expectedRate}%.`,
           exposure_mad: exposure,
           severity: severityForExposure(exposure)
-        });
+        }, options.rejectedTypeCounts));
       }
     }
 
     if (invoice.period !== options.fiscalPeriod) {
-      anomalies.push({
+      anomalies.push(applyFeedbackPriority({
         invoice_id: invoice.id,
         type: "invoice_out_of_period",
         description: `Facture rattachee a ${invoice.period}, hors periode fiscale ${options.fiscalPeriod}.`,
         exposure_mad: money(invoice.amount_ttc),
         severity: "medium"
-      });
+      }, options.rejectedTypeCounts));
     }
 
     const average = vendorAverage(invoice, history);
 
     if (average && toDecimal(invoice.amount_ttc).greaterThan(toDecimal(average).mul(3))) {
       const exposure = toDecimal(invoice.amount_ttc).minus(average).toFixed(2);
-      anomalies.push({
+      anomalies.push(applyFeedbackPriority({
         invoice_id: invoice.id,
         type: "amount_aberrant",
         description: `Montant ${invoice.amount_ttc} MAD superieur a 3x la moyenne fournisseur (${average} MAD).`,
         exposure_mad: exposure,
         severity: severityForExposure(exposure)
-      });
+      }, options.rejectedTypeCounts));
     }
 
     const duplicate = history.find(
@@ -213,13 +243,13 @@ export function auditInvoices(invoices: AuditInvoice[], options: AuditOptions): 
     );
 
     if (duplicate) {
-      anomalies.push({
+      anomalies.push(applyFeedbackPriority({
         invoice_id: invoice.id,
         type: "duplicate_probable",
         description: `Doublon probable avec la facture ${duplicate.invoice_number ?? duplicate.id}.`,
         exposure_mad: money(invoice.amount_ttc),
         severity: severityForExposure(invoice.amount_ttc)
-      });
+      }, options.rejectedTypeCounts));
     }
   }
 

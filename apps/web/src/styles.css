@@ -411,7 +411,7 @@ tbody tr:hover {
   background: #ffe1dc;
 }
 
-.source-panel {
+.review-panel {
   margin-top: 18px;
   padding: 18px;
   background: #ffffff;
@@ -419,24 +419,24 @@ tbody tr:hover {
   border-radius: 8px;
 }
 
-.source-panel__header {
+.review-panel__header {
   display: flex;
   justify-content: space-between;
   gap: 16px;
   margin-bottom: 16px;
 }
 
-.source-panel__header span,
-.source-panel__header strong {
+.review-panel__header span,
+.review-panel__header strong {
   display: block;
 }
 
-.source-panel__header span {
+.review-panel__header span {
   color: #65746c;
   font-size: 0.86rem;
 }
 
-.source-panel__header button {
+.review-panel__header button {
   min-height: 36px;
   padding: 0 12px;
   background: #eef2ee;
@@ -446,40 +446,91 @@ tbody tr:hover {
   font-weight: 800;
 }
 
-.source-panel__grid {
+.review-panel__facts {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
   margin-bottom: 16px;
 }
 
-.source-panel__grid div {
+.review-panel__facts div {
   padding: 12px;
   background: #f6f8f5;
   border-radius: 8px;
 }
 
-.source-panel__grid span,
-.source-panel__grid strong {
+.review-panel__facts span,
+.review-panel__facts strong {
   display: block;
 }
 
-.source-panel__grid span {
+.review-panel__facts span {
   color: #65746c;
   font-size: 0.78rem;
   font-weight: 800;
   text-transform: uppercase;
 }
 
-.source-panel pre {
+.review-panel__description {
+  padding: 14px;
+  background: #fff8df;
+  border-radius: 8px;
+}
+
+.review-panel__source span,
+.review-panel__note {
+  display: grid;
+  gap: 8px;
+  color: #65746c;
+  font-size: 0.82rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.review-panel__source pre {
   max-height: 320px;
   overflow: auto;
-  margin: 0;
+  margin: 8px 0 16px;
   padding: 14px;
   color: #27332d;
   background: #f4f6f3;
   border-radius: 8px;
   white-space: pre-wrap;
+}
+
+.review-panel__note textarea {
+  resize: vertical;
+  padding: 12px;
+  color: #17201b;
+  background: #ffffff;
+  border: 1px solid #cfd8d1;
+  border-radius: 8px;
+  text-transform: none;
+}
+
+.review-panel__actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.review-panel__actions button {
+  min-height: 42px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 900;
+}
+
+.review-panel__validate {
+  color: #ffffff;
+  background: #1f6b49;
+}
+
+.review-panel__reject {
+  color: #ffffff;
+  background: #a93428;
 }
 
 @media (max-width: 760px) {
@@ -508,7 +559,7 @@ tbody tr:hover {
   }
 
   .filters,
-  .source-panel__grid {
+  .review-panel__facts {
     grid-template-columns: 1fr;
   }
 }

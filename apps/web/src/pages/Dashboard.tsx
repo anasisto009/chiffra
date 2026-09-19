@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { apiGet } from "../api";
+import { ReviewPanel } from "../components/ReviewPanel";
 
 type Severity = "low" | "medium" | "high";
 type AnomalyStatus = "pending" | "validated" | "rejected";
@@ -18,7 +19,7 @@ export type AnomalyRow = {
   filename?: string;
 };
 
-type AnomalyDetail = AnomalyRow & {
+export type AnomalyDetail = AnomalyRow & {
   raw_text?: string;
   amount_ht?: string;
   tva?: string;
@@ -159,32 +160,18 @@ export function Dashboard() {
       </div>
 
       {selected ? (
-        <aside className="source-panel">
-          <div className="source-panel__header">
-            <div>
-              <span>{selected.filename ?? "Document source"}</span>
-              <strong>{selected.type}</strong>
-            </div>
-            <button type="button" onClick={() => setSelected(null)}>
-              Close
-            </button>
-          </div>
-          <div className="source-panel__grid">
-            <div>
-              <span>Vendor</span>
-              <strong>{selected.vendor ?? "Unknown"}</strong>
-            </div>
-            <div>
-              <span>Invoice</span>
-              <strong>{selected.invoice_number ?? "-"}</strong>
-            </div>
-            <div>
-              <span>Exposure</span>
-              <strong>{formatMad(selected.exposure_mad)}</strong>
-            </div>
-          </div>
-          <pre>{selected.raw_text || selected.description}</pre>
-        </aside>
+        <ReviewPanel
+          anomaly={selected}
+          onClose={() => setSelected(null)}
+          onReviewed={(status) => {
+            setAnomalies((current) =>
+              current.map((anomaly) =>
+                anomaly.id === selected.id ? { ...anomaly, status } : anomaly
+              )
+            );
+            setSelected({ ...selected, status });
+          }}
+        />
       ) : null}
     </section>
   );
@@ -202,4 +189,3 @@ function filteredAnomalies(
     .filter((anomaly) => statusFilter === "all" || anomaly.status === statusFilter)
     .sort((left, right) => Number(right.exposure_mad) - Number(left.exposure_mad));
 }
-

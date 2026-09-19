@@ -141,12 +141,12 @@ export async function registerAnomalyRoutes(app: FastifyInstance): Promise<void>
           match.bank_line_id
         ]);
       } else if (match.type === "grouped") {
-        for (const invId of match.invoice_ids) {
-          await pool.query("UPDATE bank_lines SET matched_invoice_id = $1 WHERE id = $2", [
-            invId,
-            match.bank_line_id
-          ]);
-        }
+        // Store the first invoice as the primary match for this bank line
+        // (a single bank_line row can only reference one invoice_id)
+        await pool.query(
+          "UPDATE bank_lines SET matched_invoice_id = $1 WHERE id = $2",
+          [match.invoice_ids[0], match.bank_line_id]
+        );
       }
     }
 

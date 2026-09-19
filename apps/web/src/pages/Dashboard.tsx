@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { apiGet } from "../api";
+import { AskBox } from "../components/AskBox";
 import { ReviewPanel } from "../components/ReviewPanel";
 import { StatsBar } from "../components/StatsBar";
 
@@ -95,6 +96,8 @@ export function Dashboard() {
       {error ? <p className="notice notice--danger">{error}</p> : null}
 
       <StatsBar />
+
+      <AskBox />
 
       <div className="filters">
         <label>

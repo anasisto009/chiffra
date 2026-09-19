@@ -7,6 +7,7 @@ import {
   ingestionRedisConnection,
   publishIngestionProgress
 } from "../queues/ingestion.queue.js";
+import { ensureDocumentEmbedding } from "../services/rag.js";
 
 function periodFromDate(date: string): string {
   return date.slice(0, 7);
@@ -88,6 +89,8 @@ export const ingestionWorker = new Worker<IngestionJobData>(
         ]
       );
 
+      await ensureDocumentEmbedding(documentId, result.rawText);
+
       await pool.query("COMMIT");
     } catch (error) {
       await pool.query("ROLLBACK");
@@ -122,4 +125,3 @@ ingestionWorker.on("failed", async (job, error) => {
     reason
   });
 });
-

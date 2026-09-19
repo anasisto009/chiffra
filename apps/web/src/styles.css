@@ -217,6 +217,70 @@ h1 {
   font-size: 1rem;
 }
 
+.ask-box {
+  display: grid;
+  gap: 14px;
+  margin-bottom: 16px;
+  padding: 18px;
+  background: #ffffff;
+  border: 1px solid #d9ded6;
+  border-radius: 8px;
+}
+
+.ask-box h2 {
+  margin-bottom: 0;
+}
+
+.ask-box__input {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+}
+
+.ask-box__input input {
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid #cfd8d1;
+  border-radius: 8px;
+}
+
+.ask-box__input button {
+  min-height: 44px;
+  padding: 0 16px;
+  color: #ffffff;
+  background: #1f6b49;
+  border: 0;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 900;
+}
+
+.ask-box__answer {
+  display: grid;
+  grid-template-columns: 1fr minmax(180px, 260px);
+  gap: 14px;
+  padding: 14px;
+  background: #f6f8f5;
+  border-radius: 8px;
+}
+
+.ask-box__answer p {
+  margin-bottom: 0;
+  line-height: 1.5;
+}
+
+.ask-box__answer span,
+.ask-box__answer strong {
+  display: block;
+}
+
+.ask-box__answer span {
+  color: #65746c;
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
 .progress {
   margin-top: 18px;
   padding: 16px;
@@ -596,6 +660,11 @@ tbody tr:hover {
 
   .filters,
   .review-panel__facts {
+    grid-template-columns: 1fr;
+  }
+
+  .ask-box__input,
+  .ask-box__answer {
     grid-template-columns: 1fr;
   }
 }

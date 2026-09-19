@@ -17,3 +17,8 @@ export const clientGPT41 = new OpenAI({
   }
 });
 
+export const clientEmbeddings = new OpenAI({
+  baseURL: config.llm.baseURL,
+  apiKey: config.llm.apiKey
+});
+

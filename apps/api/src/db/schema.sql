@@ -1,4 +1,5 @@
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
+CREATE EXTENSION IF NOT EXISTS vector;
 
 DO $$
 BEGIN
@@ -77,6 +78,14 @@ CREATE TABLE IF NOT EXISTS orchestration_checkpoints (
   created_at timestamptz NOT NULL DEFAULT now()
 );
 
+CREATE TABLE IF NOT EXISTS document_embeddings (
+  document_id uuid PRIMARY KEY REFERENCES documents(id) ON DELETE CASCADE,
+  content_hash text NOT NULL,
+  embedding vector(512) NOT NULL,
+  model text NOT NULL,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
 CREATE INDEX IF NOT EXISTS idx_documents_status ON documents(status);
 CREATE INDEX IF NOT EXISTS idx_invoices_document_id ON invoices(document_id);
 CREATE INDEX IF NOT EXISTS idx_invoices_vendor_date ON invoices(vendor, date);
@@ -85,3 +94,4 @@ CREATE INDEX IF NOT EXISTS idx_bank_lines_matched_invoice_id ON bank_lines(match
 CREATE INDEX IF NOT EXISTS idx_anomalies_invoice_id ON anomalies(invoice_id);
 CREATE INDEX IF NOT EXISTS idx_anomalies_exposure_mad ON anomalies(exposure_mad DESC);
 CREATE INDEX IF NOT EXISTS idx_orchestration_checkpoints_run_id ON orchestration_checkpoints(run_id, created_at);
+CREATE INDEX IF NOT EXISTS idx_document_embeddings_vector ON document_embeddings USING ivfflat (embedding vector_cosine_ops);

@@ -16,7 +16,7 @@ await app.register(cors, {
   origin: true
 });
 
-app.get("/health", async () => {
+const getHealth = async () => {
   let dbStatus = "connected";
   let redisStatus = "connected";
   try {
@@ -31,7 +31,10 @@ app.get("/health", async () => {
     db: dbStatus,
     redis: redisStatus
   };
-});
+};
+
+app.get("/health", getHealth);
+app.get("/api/health", getHealth);
 
 app.get("/agents", async () => ({
   agents

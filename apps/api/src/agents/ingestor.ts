@@ -86,7 +86,7 @@ async function getCachedResult(hash: string): Promise<IngestorResult | null> {
     if (redis.status === "wait") {
       await redis.connect().catch(() => undefined);
     }
-    const cached = await redis.get(`ingestor:${hash}`);
+    const cached = (await redis.get(`ocr:${hash}`)) ?? (await redis.get(`ingestor:${hash}`));
     return cached ? (JSON.parse(cached) as IngestorResult) : null;
   } catch {
     return null;
@@ -98,7 +98,11 @@ async function setCachedResult(hash: string, result: IngestorResult): Promise<vo
     if (redis.status === "wait") {
       await redis.connect().catch(() => undefined);
     }
-    await redis.set(`ingestor:${hash}`, JSON.stringify(result), "EX", OCR_CACHE_TTL_SECONDS);
+    const data = JSON.stringify(result);
+    await Promise.all([
+      redis.set(`ocr:${hash}`, data, "EX", OCR_CACHE_TTL_SECONDS),
+      redis.set(`ingestor:${hash}`, data, "EX", OCR_CACHE_TTL_SECONDS)
+    ]);
   } catch {
     // Ignore cache error
   }

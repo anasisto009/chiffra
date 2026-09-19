@@ -10,7 +10,18 @@ export default defineConfig({
     }
   },
   server: {
-    port: 5173
+    port: 5173,
+    host: "0.0.0.0",
+    proxy: {
+      "/api": {
+        target: process.env.VITE_API_TARGET ?? "http://localhost:4000",
+        changeOrigin: true,
+        ws: true
+      },
+      "/uploads": {
+        target: process.env.VITE_API_TARGET ?? "http://localhost:4000",
+        changeOrigin: true
+      }
+    }
   }
 });
-

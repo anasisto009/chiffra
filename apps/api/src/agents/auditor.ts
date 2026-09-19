@@ -1,5 +1,35 @@
+import Decimal from 'decimal.js';
 import type { AgentDefinition } from "@chiffra/shared";
-import { toDecimal } from "@chiffra/shared";
+
+export function toDecimal(value: Decimal.Value): Decimal {
+  return new Decimal(value);
+}
+
+export type AnomalyFamily =
+  | "DOUBLON"
+  | "TVA_INCORRECTE"
+  | "HORS_PERIODE"
+  | "TIERS_INCONNU"
+  | "MONTANT_ABERRANT";
+
+export function getAnomalyFamily(type: string): AnomalyFamily {
+  switch (type) {
+    case "duplicate_probable":
+      return "DOUBLON";
+    case "tva_rate_mismatch":
+    case "tva_rate_invalid":
+    case "tva_calculation_error":
+      return "TVA_INCORRECTE";
+    case "invoice_out_of_period":
+      return "HORS_PERIODE";
+    case "unknown_vendor":
+      return "TIERS_INCONNU";
+    case "amount_aberrant":
+      return "MONTANT_ABERRANT";
+    default:
+      return "TVA_INCORRECTE";
+  }
+}
 
 export const auditorAgent: AgentDefinition = {
   id: "auditor",
@@ -55,6 +85,7 @@ export type AuditAnomaly = {
   description: string;
   exposure_mad: string;
   severity: "low" | "medium" | "high";
+  famille?: AnomalyFamily;
 };
 
 export type AuditOptions = {
@@ -174,9 +205,11 @@ function applyFeedbackPriority(
   rejectedTypeCounts: Record<string, number> = {}
 ): AuditAnomaly {
   const rejectedCount = rejectedTypeCounts[anomaly.type] ?? 0;
-  if (rejectedCount < 2) return anomaly;
+  const famille = anomaly.famille ?? getAnomalyFamily(anomaly.type);
+  if (rejectedCount < 2) return { ...anomaly, famille };
   return {
     ...anomaly,
+    famille,
     severity: lowerSeverity(anomaly.severity),
     description: `${anomaly.description} (Priorité réduite par arbitrage précédent)`
   };
@@ -295,18 +328,19 @@ export function auditInvoices(invoices: AuditInvoice[], options: AuditOptions): 
       }
     }
 
-    // 6. Montant aberrant (> 10x la moyenne historique fournisseur per regles-fiscales.md)
+    // 6. Montant aberrant (> 5x la moyenne historique fournisseur per regles-fiscales.md)
     const avgRef = vendorMatch?.averageAmountTtc;
-    if (avgRef && avgRef > 0 && amountTtc.greaterThan(toDecimal(avgRef).mul(10))) {
+    if (avgRef && avgRef > 0 && amountTtc.greaterThan(toDecimal(avgRef).mul(5))) {
       const exposure = amountTtc.minus(avgRef).toFixed(2);
       anomalies.push(
         applyFeedbackPriority(
           {
             invoice_id: invoice.id,
             type: "amount_aberrant",
-            description: `Montant ${amountTtc.toFixed(2)} MAD supérieur à 10x la moyenne historique du fournisseur (${avgRef.toFixed(2)} MAD).`,
+            description: `Montant ${amountTtc.toFixed(2)} MAD supérieur à la normale historique du fournisseur (${avgRef.toFixed(2)} MAD).`,
             exposure_mad: exposure,
-            severity: severityForExposure(exposure)
+            severity: severityForExposure(exposure),
+            famille: "MONTANT_ABERRANT"
           },
           options.rejectedTypeCounts
         )

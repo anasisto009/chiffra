@@ -1,17 +1,47 @@
 import type { FastifyInstance } from "fastify";
-import { createReadStream } from "node:fs";
-import { basename } from "node:path";
+import { existsSync, createReadStream } from "node:fs";
+import { basename, join, resolve } from "node:path";
 import { pool } from "../db/client.js";
+
+function resolveDocumentPath(filename: string, storagePath?: string | null): string | null {
+  if (storagePath && existsSync(storagePath)) {
+    return storagePath;
+  }
+
+  const candidateDirs = [
+    join(process.cwd(), "uploads"),
+    join(process.cwd(), "apps/api/uploads"),
+    join(process.cwd(), "sujet-03-chiffra", "factures"),
+    join(process.cwd(), "sujet-03-chiffra", "releves"),
+    join(process.cwd(), "sujet-03-chiffra"),
+    resolve(process.cwd(), "../sujet-03-chiffra/factures"),
+    resolve(process.cwd(), "../sujet-03-chiffra/releves"),
+    resolve(process.cwd(), "../sujet-03-chiffra"),
+    "C:\\Users\\MY PC\\Desktop\\sujet-03-chiffra\\factures",
+    "C:\\Users\\MY PC\\Desktop\\sujet-03-chiffra\\releves",
+    "C:\\Users\\MY PC\\Desktop\\sujet-03-chiffra"
+  ];
+
+  for (const dir of candidateDirs) {
+    const full = join(dir, filename);
+    if (existsSync(full)) {
+      return full;
+    }
+  }
+
+  return null;
+}
 
 export async function registerDocumentRoutes(app: FastifyInstance): Promise<void> {
   app.get("/api/documents", async () => {
     const result = await pool.query(
       `SELECT id, filename, type, status,
+              failure_reason,
               ocr_cache->>'reason' AS reason,
               ocr_cache->>'message' AS message,
               created_at
        FROM documents
-       ORDER BY created_at DESC`
+       ORDER BY filename ASC, created_at DESC`
     );
 
     return {
@@ -26,14 +56,19 @@ export async function registerDocumentRoutes(app: FastifyInstance): Promise<void
     );
     const document = result.rows[0];
 
-    if (!document?.storage_path) {
+    if (!document) {
+      return reply.code(404).send({ error: "document_not_found" });
+    }
+
+    const resolvedPath = resolveDocumentPath(document.filename, document.storage_path);
+    if (!resolvedPath) {
       return reply.code(404).send({ error: "document_source_not_found" });
     }
 
     return reply
-      .header("Content-Type", document.type)
+      .header("Content-Type", document.type || "application/octet-stream")
       .header("Content-Disposition", `inline; filename="${basename(document.filename)}"`)
-      .send(createReadStream(document.storage_path));
+      .send(createReadStream(resolvedPath));
   });
 
   app.get<{ Params: { id: string } }>("/api/documents/:id", async (request, reply) => {

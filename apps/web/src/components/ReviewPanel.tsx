@@ -1,6 +1,10 @@
 import { useState } from "react";
 import { apiPost } from "../api";
-import type { AnomalyDetail } from "../pages/Dashboard";
+import type { ApiAnomaly } from "../features/mvp/useMvpData";
+
+export type AnomalyDetail = ApiAnomaly & {
+  raw_text?: string;
+};
 
 type ReviewPanelProps = {
   anomaly: AnomalyDetail;

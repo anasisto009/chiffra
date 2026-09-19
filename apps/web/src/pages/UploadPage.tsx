@@ -1,10 +1,10 @@
-import { motion, AnimatePresence } from 'framer-motion';
-import { Upload, File, CheckCircle, XCircle, Loader2, Eye, FileText, FileSpreadsheet, ImageIcon, Sparkles } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Upload, CheckCircle, XCircle, Loader2, Eye, FileText, FileSpreadsheet, ImageIcon, Sparkles, AlertTriangle } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 import toast from 'react-hot-toast';
 import { API_URL, apiUpload } from '../api';
-import { useMockDocuments } from '../features/mvp/useMvpData';
+import { useDocuments } from '../features/mvp/useMvpData';
 
 function formatKind(type: string, filename?: string): { label: string; icon: React.ReactNode; color: string } {
   const lower = (filename || '').toLowerCase();
@@ -70,7 +70,7 @@ function formatReason(reason?: string | null, message?: string | null): string {
 }
 
 export function UploadPage() {
-  const { data: documents = [], refetch } = useMockDocuments();
+  const { data: documents = [], refetch, isLoading, isError } = useDocuments();
   const [isUploading, setIsUploading] = useState(false);
   const [filter, setFilter] = useState<'all' | 'done' | 'non_traite'>('all');
 
@@ -142,6 +142,8 @@ export function UploadPage() {
     return true;
   });
 
+  const inProgressFilter = inProgressCount > 0 ? ` · ${inProgressCount} en cours` : '';
+
   return (
     <div className="space-y-8">
       {/* Header */}
@@ -171,11 +173,15 @@ export function UploadPage() {
           </div>
           <div className="flex space-x-3">
             <div className="bg-white/10 backdrop-blur-sm px-5 py-3 rounded-xl border border-white/10">
-              <div className="text-2xl font-extrabold">{processedCount || 99}</div>
+              <div className="text-2xl font-extrabold">{documents.length}</div>
+              <div className="text-xs text-primary-100 font-medium">Total</div>
+            </div>
+            <div className="bg-white/10 backdrop-blur-sm px-5 py-3 rounded-xl border border-white/10">
+              <div className="text-2xl font-extrabold">{processedCount}</div>
               <div className="text-xs text-primary-100 font-medium">Traités</div>
             </div>
             <div className="bg-white/10 backdrop-blur-sm px-5 py-3 rounded-xl border border-white/10">
-              <div className="text-2xl font-extrabold">{rejectedCount || 15}</div>
+              <div className="text-2xl font-extrabold">{rejectedCount}</div>
               <div className="text-xs text-primary-100 font-medium">Illisibles</div>
             </div>
           </div>
@@ -247,12 +253,28 @@ export function UploadPage() {
         <div className="p-6 border-b border-gray-200 bg-gray-50/70">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
-              <h2 className="text-lg font-bold text-gray-900">
-                Suivi des Documents Ingérés ({documents.length})
-              </h2>
+              <div className="flex items-center gap-2">
+                <h2 className="text-lg font-bold text-gray-900">
+                  Suivi des Documents Ingérés
+                </h2>
+                {isLoading ? (
+                  <Loader2 className="w-4 h-4 animate-spin text-primary-500" />
+                ) : (
+                  <span className="px-2 py-0.5 bg-primary-100 text-primary-700 text-xs font-bold rounded-full">
+                    {documents.length}
+                  </span>
+                )}
+              </div>
               <p className="text-sm text-gray-500 mt-0.5">
                 Statut en temps réel issu de PostgreSQL et des workers BullMQ
+                {inProgressFilter}
               </p>
+              {isError && (
+                <p className="text-xs text-error mt-1 flex items-center gap-1">
+                  <AlertTriangle className="w-3 h-3" />
+                  Impossible de joindre l'API — vérifiez que le serveur est démarré.
+                </p>
+              )}
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <button 
@@ -273,7 +295,7 @@ export function UploadPage() {
                     : 'bg-success/10 border-success/20 text-success hover:bg-success/20'
                 }`}
               >
-                Traités ({processedCount})
+                ✓ Traités ({processedCount})
               </button>
               <button 
                 onClick={() => setFilter('non_traite')}
@@ -283,16 +305,21 @@ export function UploadPage() {
                     : 'bg-error/10 border-error/20 text-error hover:bg-error/20'
                 }`}
               >
-                Rejetés ({rejectedCount})
+                ✗ Illisibles ({rejectedCount})
               </button>
             </div>
           </div>
         </div>
 
         <div className="divide-y divide-gray-100 max-h-[600px] overflow-y-auto">
-          {filteredDocs.length === 0 ? (
+          {isLoading && documents.length === 0 ? (
+            <div className="p-12 text-center">
+              <Loader2 className="w-8 h-8 animate-spin text-primary-400 mx-auto mb-3" />
+              <p className="text-sm text-gray-400">Chargement des documents depuis l'API...</p>
+            </div>
+          ) : filteredDocs.length === 0 ? (
             <div className="p-12 text-center text-gray-400 text-sm">
-              Aucun document dans cette catégorie.
+              {filter === 'all' ? 'Aucun document ingéré. Déposez un fichier ci-dessus.' : 'Aucun document dans cette catégorie.'}
             </div>
           ) : (
             filteredDocs.map((doc, index) => {
@@ -339,7 +366,8 @@ export function UploadPage() {
                           {new Date(doc.created_at).toLocaleString('fr-FR')}
                         </p>
                         {failureReason && (
-                          <p className="text-xs text-error mt-1.5 bg-error/5 border border-error/10 px-3 py-1.5 rounded-lg font-medium">
+                          <p className="text-xs text-error mt-1.5 bg-error/5 border border-error/10 px-3 py-1.5 rounded-lg font-medium flex items-center gap-1.5">
+                            <XCircle className="w-3 h-3 shrink-0" />
                             {failureReason}
                           </p>
                         )}

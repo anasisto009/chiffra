@@ -194,16 +194,35 @@ async function explainerNode(state: OrchestratorState): Promise<Partial<Orchestr
   return nextState;
 }
 
+import type { AgentDefinition } from "@chiffra/shared";
+
+export const orchestratorAgent: AgentDefinition = {
+  id: "orchestrator",
+  label: "Orchestrator",
+  responsibility: "Isole les échecs, coordonne le pipeline multi-agents et escalade sans inventer."
+};
+
+async function orchestratorNode(state: OrchestratorState): Promise<Partial<OrchestratorState>> {
+  const nextState: OrchestratorState = {
+    ...state,
+    status: state.errors.length > 0 ? "partial" : "done"
+  };
+  await saveCheckpoint("orchestrator", nextState);
+  return nextState;
+}
+
 export const orchestratorGraph = new StateGraph(OrchestratorAnnotation)
   .addNode("ingestor", ingestorNode)
   .addNode("auditor", auditorNode)
   .addNode("reconciler", reconcilerNode)
   .addNode("explainer", explainerNode)
+  .addNode("orchestrator", orchestratorNode)
   .addEdge(START, "ingestor")
   .addEdge("ingestor", "auditor")
   .addEdge("auditor", "reconciler")
   .addEdge("reconciler", "explainer")
-  .addEdge("explainer", END)
+  .addEdge("explainer", "orchestrator")
+  .addEdge("orchestrator", END)
   .compile();
 
 export async function runOrchestration(

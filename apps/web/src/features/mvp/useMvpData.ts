@@ -5,12 +5,51 @@ export type ApiDocument = {
   id: string;
   filename: string;
   type: string;
-  status: "pending" | "processing" | "done" | "non_traite";
+  /** Status as stored in DB: PROCESSED | UNREADABLE | pending | processing */
+  status: string;
+  failure_reason?: string | null;
   reason?: string | null;
   message?: string | null;
   created_at: string;
   progress?: number;
 };
+
+/** Normalized document with UI-friendly status */
+export type NormalizedDocument = Omit<ApiDocument, 'status'> & {
+  status: 'done' | 'non_traite' | 'processing' | 'pending';
+};
+
+function normalizeDocStatus(raw: ApiDocument): NormalizedDocument {
+  let status: NormalizedDocument['status'];
+  switch (raw.status?.toUpperCase()) {
+    case 'PROCESSED': status = 'done'; break;
+    case 'UNREADABLE': status = 'non_traite'; break;
+    case 'PROCESSING': status = 'processing'; break;
+    default: status = 'pending';
+  }
+  // Expose failure_reason as reason for backwards-compat rendering
+  return {
+    ...raw,
+    status,
+    reason: raw.failure_reason ?? raw.reason ?? null,
+  };
+}
+
+export function useDocuments() {
+  return useQuery({
+    queryKey: ["documents"],
+    queryFn: async () => {
+      const raw = await apiGet<{ documents: ApiDocument[] }>("/api/documents");
+      return raw.documents.map(normalizeDocStatus);
+    },
+    refetchInterval: 2000
+  });
+}
+
+/** @deprecated Use useDocuments() instead */
+export function useMockDocuments() {
+  return useDocuments();
+}
 
 export type ApiAnomaly = {
   id: string;
@@ -43,13 +82,6 @@ export type ApiStats = {
   processing_time_seconds: number;
 };
 
-export function useMockDocuments() {
-  return useQuery({
-    queryKey: ["documents"],
-    queryFn: async () => (await apiGet<{ documents: ApiDocument[] }>("/api/documents")).documents,
-    refetchInterval: 2000
-  });
-}
 
 export function useMockMetrics() {
   return useQuery({

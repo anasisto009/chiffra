@@ -37,12 +37,12 @@ export function AskBox() {
   }
 
   return (
-    <section className="ask-box">
+    <section className="query-box">
       <div>
         <p className="eyebrow">T15 semantic search</p>
         <h2>Ask your documents</h2>
       </div>
-      <div className="ask-box__input">
+      <div className="query-box__input">
         <input
           value={question}
           placeholder="Ex: Quelles factures ont un risque TVA eleve ?"
@@ -59,7 +59,7 @@ export function AskBox() {
       </div>
       {error ? <p className="notice notice--danger">{error}</p> : null}
       {answer ? (
-        <div className="ask-box__answer">
+        <div className="query-box__answer">
           <p>{answer.answer_fr}</p>
           <div>
             <span>Sources</span>
